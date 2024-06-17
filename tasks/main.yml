@@ -41,3 +41,27 @@
   loop:
     - "{{ pam_tmp_inst_dir }}"
     - "{{ pam_var_tmp_inst_dir }}"
+
+- name: Ensure the pam_namespace.service systemd service runs
+  block:
+
+  - name: Ensure the systemd override directory exists
+    ansible.builtin.file:
+      path: /etc/systemd/system/pam_namespace.service.d
+      state: directory
+
+  - name: Create the override.conf file
+    ansible.builtin.copy:
+      dest: /etc/systemd/system/pam_namespace.service.d/override.conf
+      content: |
+        [Unit]
+        Before=slurmd.service
+        [Install]
+        RequiredBy=slurmd.service
+
+  - name: Enable the pam_namespace.service systemd service
+    ansible.builtin.systemd:
+      name: pam_namespace.service
+      enabled: yes
+
+  when: pam_use_namespace is defined
